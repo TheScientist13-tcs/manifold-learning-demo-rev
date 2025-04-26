@@ -19,30 +19,30 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import seaborn as sns
 sns.set_style("darkgrid")
 
-def compute_metrics(y_true, y_pred):
-    result = dict(
-        accuracy=accuracy_score(y_true, y_pred),
-        precision=precision_score(y_true, y_pred, average="weighted", zero_division=1),
-        recall=recall_score(y_true, y_pred, average="weighted"),
-        f1=f1_score(y_true, y_pred, average="weighted"),
-    )
+# def compute_metrics(y_true, y_pred):
+#     result = dict(
+#         accuracy=accuracy_score(y_true, y_pred),
+#         precision=precision_score(y_true, y_pred, average="weighted", zero_division=1),
+#         recall=recall_score(y_true, y_pred, average="weighted"),
+#         f1=f1_score(y_true, y_pred, average="weighted"),
+#     )
 
-    for key, value in result.items():
-        print("{} = {:.3f}%".format(key, value * 100))
-    return result
-
-
-def evaluate_classifier(cf, X, y, test_size=0.30):
-    Z_train, Z_test, y_train, y_test = train_test_split(
-        X, y, train_size=test_size, stratify=y, random_state=1111
-    )
-    cf.fit(X=Z_train, y=y_train)
-
-    y_pred = cf.predict(Z_test)
-    result = compute_metrics(y_test, y_pred)
-    return (cf, result)
+#     for key, value in result.items():
+#         print("{} = {:.3f}%".format(key, value * 100))
+#     return result
 
 
+# def evaluate_classifier(cf, X, y, test_size=0.30):
+#     Z_train, Z_test, y_train, y_test = train_test_split(
+#         X, y, train_size=test_size, stratify=y, random_state=1111
+#     )
+#     cf.fit(X=Z_train, y=y_train)
+
+#     y_pred = cf.predict(Z_test)
+#     result = compute_metrics(y_test, y_pred)
+#     return (cf, result)
+
+@st.cache_data
 def plot_projection(df, k, grouping_name, axis_prefix, title, marker_size=5):
 
     xlabel = axis_prefix + "1"
@@ -164,7 +164,7 @@ def main():
     st.markdown(
         "##### By: Dharyll Prince M. Abellana | Assistant Professor of Computer Science | University of the Philippines Cebu"
     )
-    st.write("Note: The computations will take some time, as T-SNE and KPCA are generally slow.")
+    st.write("Note: The computations may take some time, as T-SNE and KPCA are generally slow.")
 
 
     with st.sidebar:
@@ -244,24 +244,6 @@ def main():
     col1, col2 = st.columns(2)
     with st.container():
         with col1:
-            ## original data
-            col_names = [f"X{i+1}" for i in range(X.shape[1])]
-            df_orig = pd.DataFrame(data=X, columns=col_names)
-            df_orig["target"] = y
-            nvars = X.shape[1]
-            if X.shape[1] < 4:
-                fig1 = plot_projection(
-                    df_orig, X.shape[1], "target", "X", "Original"
-                )
-                st.plotly_chart(fig1)
-        with col2:
-            ## PCA
-            fig2 = plot_projection(
-                df_pca, k, "target", "PC", "Principal Component Analysis"
-            )
-            st.plotly_chart(fig2)
-    with st.container():
-        with col1:
             ## KPCA
             fig3 = plot_projection(
                 df_kpca, k, "target", "KPC", "Kernel Principal Component Analysis"
@@ -277,6 +259,25 @@ def main():
                 "t-distributed Stochastic Neighbor Embedding",
             )
             st.plotly_chart(fig4)
+    with st.container():
+        with col2:
+            ## original data
+            col_names = [f"X{i+1}" for i in range(X.shape[1])]
+            df_orig = pd.DataFrame(data=X, columns=col_names)
+            df_orig["target"] = y
+            nvars = X.shape[1]
+            if X.shape[1] < 4:
+                fig1 = plot_projection(
+                    df_orig, X.shape[1], "target", "X", "Original"
+                )
+                st.plotly_chart(fig1)
+        with col1:
+            ## PCA
+            fig2 = plot_projection(
+                df_pca, k, "target", "PC", "Principal Component Analysis"
+            )
+            st.plotly_chart(fig2)
+
     
 
 if __name__ == "__main__":
