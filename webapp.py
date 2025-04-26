@@ -164,6 +164,8 @@ def main():
     st.markdown(
         "##### By: Dharyll Prince M. Abellana | Assistant Professor of Computer Science | University of the Philippines Cebu"
     )
+    st.write("Note: The computations will take some time, as T-SNE and KPCA are generally slow.")
+
 
     with st.sidebar:
         dataset_name = st.selectbox(
