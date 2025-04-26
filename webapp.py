@@ -84,7 +84,7 @@ def plot_projection(df, k, grouping_name, axis_prefix, title, marker_size=5):
         fig.update_layout(title=title, xaxis_title=xlabel, yaxis_title=ylabel)
     return fig
 
-
+@st.cache_data
 def generate_dataset(name, num_samples=1000):
     if name == "Circles":
         X, y = make_circles(
@@ -98,6 +98,63 @@ def generate_dataset(name, num_samples=1000):
         X = dataset.data
         y = dataset.target
     return (X, y)
+
+@st.cache_data
+def standardize_data(X):
+    sc = StandardScaler()
+    X = sc.fit_transform(X)
+    return X
+
+@st.cache_data
+def compute_tsne(k, perplexity, X):
+    tsne = TSNE(
+        n_components=k,
+        perplexity=perplexity,
+    )
+    Z_tsne = tsne.fit_transform(X)
+    return Z_tsne
+
+@st.cache_data
+def poly_compute_kpca(k, deg, coef, alpha, X):
+    kpca = KernelPCA(
+            n_components=k,
+            kernel="poly",
+            degree=deg,
+            coef0=coef,
+            alpha=alpha,
+            fit_inverse_transform=True,
+        )
+    Z_kpca = kpca.fit_transform(X)
+    return Z_kpca
+
+@st.cache_data
+def rbf_compute_kpca(k, gamma, alpha, X):
+    kpca = KernelPCA(
+            n_components=k,
+            kernel="rbf",
+            gamma=gamma,
+            alpha=alpha,
+            fit_inverse_transform=True,
+        )
+    Z_kpca = kpca.fit_transform(X)
+    return Z_kpca
+
+@st.cache_data
+def linear_compute_kpca(k, X):
+    kpca = KernelPCA(
+            n_components=k,
+            kernel="linear",
+            fit_inverse_transform=True,
+        )
+    Z_kpca = kpca.fit_transform(X)
+    return Z_kpca
+
+@st.cache_data
+def compute_pca(k, X):
+    pca = PCA(n_components=k).fit(X)
+    Z_pca = pca.transform(X)
+    return Z_pca
+
 
 
 def main():
@@ -123,13 +180,11 @@ def main():
     # Preprocessing
 
     if is_standardized:
-        sc = StandardScaler()
-        X = sc.fit_transform(X)
+        X = standardize_data(X)
 
     # Dimensionality Reduction
     ## PCA
-    pca = PCA(n_components=k).fit(X)
-    Z_pca = pca.transform(X)
+    Z_pca = compute_pca(k, X)
 
     df_pca = pd.DataFrame(data=Z_pca, columns=[f"PC{i+1}" for i in range(k)])
     df_pca["target"] = y
@@ -145,7 +200,6 @@ def main():
                 )
             with col2:
                 step_size = st.number_input("Step Size", min_value=0.0001, step=0.01, value=0.1)
-    kpca = None
     if kernel == "Radial Basis Function":
         with st.sidebar:
             with st.container():
@@ -154,19 +208,9 @@ def main():
                     gamma = st.number_input("Gamma", min_value=0.0001, step=step_size, value=0.3)
                 with col2:
                     alpha = st.number_input("Alpha", min_value=0.0001, step=step_size, value=0.4)
-        kpca = KernelPCA(
-            n_components=k,
-            kernel="rbf",
-            gamma=gamma,
-            alpha=alpha,
-            fit_inverse_transform=True,
-        )  ## moons
+        Z_kpca = rbf_compute_kpca(k, gamma, alpha, X)
     elif kernel == "Linear":
-        kpca = KernelPCA(
-            n_components=k,
-            kernel="linear",
-            fit_inverse_transform=True,
-        )
+        Z_kpca = linear_compute_kpca(k, X)
     elif kernel == "Polynomial":
         with st.sidebar:
             deg = st.number_input("Degree", min_value=1, step=1)
@@ -177,15 +221,7 @@ def main():
                 with col2:
                     coef = st.number_input("Coefficient", min_value=0.0, value=0.1)
 
-        kpca = KernelPCA(
-            n_components=k,
-            kernel="poly",
-            degree=deg,
-            coef0=coef,
-            alpha=alpha,
-            fit_inverse_transform=True,
-        )
-    Z_kpca = kpca.fit_transform(X)
+        Z_kpca = poly_compute_kpca(k, deg, coef, alpha, kernel, X)
 
     df_kpca = pd.DataFrame(data=Z_kpca, columns=[f"KPC{i+1}" for i in range(k)])
     df_kpca["target"] = y
@@ -196,12 +232,7 @@ def main():
         st.header("t-SNE Parameters")
         perplexity = st.number_input(label="Perplexity", min_value=1, value=4)
 
-    tsne = TSNE(
-        n_components=k,
-        perplexity=perplexity,
-    )
-
-    Z_tsne = tsne.fit_transform(X)
+    Z_tsne = compute_tsne(k, perplexity, X)
 
     df_tsne = pd.DataFrame(data=Z_tsne, columns=[f"TSNE{i+1}" for i in range(k)])
     df_tsne["target"] = y
