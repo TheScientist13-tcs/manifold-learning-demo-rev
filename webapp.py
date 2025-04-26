@@ -19,28 +19,6 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import seaborn as sns
 sns.set_style("darkgrid")
 
-# def compute_metrics(y_true, y_pred):
-#     result = dict(
-#         accuracy=accuracy_score(y_true, y_pred),
-#         precision=precision_score(y_true, y_pred, average="weighted", zero_division=1),
-#         recall=recall_score(y_true, y_pred, average="weighted"),
-#         f1=f1_score(y_true, y_pred, average="weighted"),
-#     )
-
-#     for key, value in result.items():
-#         print("{} = {:.3f}%".format(key, value * 100))
-#     return result
-
-
-# def evaluate_classifier(cf, X, y, test_size=0.30):
-#     Z_train, Z_test, y_train, y_test = train_test_split(
-#         X, y, train_size=test_size, stratify=y, random_state=1111
-#     )
-#     cf.fit(X=Z_train, y=y_train)
-
-#     y_pred = cf.predict(Z_test)
-#     result = compute_metrics(y_test, y_pred)
-#     return (cf, result)
 
 @st.cache_data
 def plot_projection(df, k, grouping_name, axis_prefix, title, marker_size=5):
